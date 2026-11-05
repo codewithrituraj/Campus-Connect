@@ -24,7 +24,12 @@ def get_allowed_origins():
 def after_request(response):
     request_origin = request.headers.get("Origin")
     allowed_origins = get_allowed_origins()
-    if "*" in allowed_origins:
+    # The frontend is hosted on Vercel while this API is hosted on Render.
+    # Vercel preview/production domains are safe here because this API does
+    # not use cookie-based credentials; the browser still needs this header
+    # for the cross-origin API request to succeed.
+    is_vercel_origin = bool(request_origin and request_origin.endswith(".vercel.app"))
+    if "*" in allowed_origins or is_vercel_origin:
         response.headers["Access-Control-Allow-Origin"] = "*"
     elif request_origin in allowed_origins:
         response.headers["Access-Control-Allow-Origin"] = request_origin
