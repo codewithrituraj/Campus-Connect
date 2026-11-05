@@ -10,14 +10,27 @@ app = Flask(__name__)
 
 supabase_url = os.environ.get("SUPABASE_URL")
 supabase_key = os.environ.get("SUPABASE_KEY") or os.environ.get("SUPABASE_PUBLISHABLE_KEY")
+if not supabase_url or not supabase_key:
+    raise RuntimeError("SUPABASE_URL and SUPABASE_KEY must be configured")
 supabase: Client = create_client(supabase_url, supabase_key)
+
+
+def get_allowed_origins():
+    configured = os.environ.get("FRONTEND_ORIGINS", "*")
+    return {origin.strip() for origin in configured.split(",") if origin.strip()}
 
 
 @app.after_request
 def after_request(response):
-    response.headers.add("Access-Control-Allow-Origin", "*")
-    response.headers.add("Access-Control-Allow-Headers", "Content-Type, Authorization, X-User-Id, X-User-Email")
-    response.headers.add("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+    request_origin = request.headers.get("Origin")
+    allowed_origins = get_allowed_origins()
+    if "*" in allowed_origins:
+        response.headers["Access-Control-Allow-Origin"] = "*"
+    elif request_origin in allowed_origins:
+        response.headers["Access-Control-Allow-Origin"] = request_origin
+        response.headers["Vary"] = "Origin"
+    response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-User-Id, X-User-Email"
+    response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
     return response
 
 
