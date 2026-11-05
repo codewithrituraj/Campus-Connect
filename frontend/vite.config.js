@@ -9,7 +9,7 @@ export default defineConfig({
     open: false,
     proxy: {
       '/api': {
-        target: 'https://hello-world-workshop.onrender.com',
+        target: 'https://campus-connect-api-neon.vercel.app',
         changeOrigin: true,
         secure: false,
       }
